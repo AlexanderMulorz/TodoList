@@ -6,17 +6,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,21 +35,42 @@ data class Item(
     val text: String,
     val done: Boolean
 )
+var itemsList: MutableList<Item> = mutableListOf()
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val jsonString = """
     [
         { "text": "App Fertigstellen", "done": true },
+        { "text": "Auf github hochladen",  "done": false },
         { "text": "Auf github hochladen",  "done": false }
     ]
 """
-        val itemsList: List<Item> = Json.decodeFromString(jsonString)
+        itemsList = Json.decodeFromString(jsonString)
         enableEdgeToEdge()
         setContent {
             TodoListTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ListExample(modifier = Modifier.fillMaxSize(), itemsList)
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                titleContentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            title = {
+                                Text("Todo Liste")
+                            }
+                        )
+                    }) { innerPadding ->
+                    Column() {
+                        ListExample(innerPadding, itemsList)
+                        Button(onClick={openPopup()}) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "add element to TODO list")
+                        }
+                    }
                 }
             }
         }
@@ -53,19 +79,19 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun ListExample(modifier: Modifier = Modifier, itemsList: List<Item>){
+fun ListExample(innerPadding: PaddingValues, itemsList: MutableList<Item>){
 
 
     var count = remember { mutableStateOf(0)}
-    Column() {
+    Column(modifier = Modifier.padding(innerPadding)) {
         itemsList.forEach { bulletpointItem ->
-            BulletPoint(bulletpointItem.text)
+            BulletPoint(bulletpointItem)
         }
     }
 }
 
 @Composable
-fun BulletPoint(bulletpointText: String){
+fun BulletPoint(bulletPointItem: Item){
     Row{
         var imageDone = remember { mutableStateOf(Icons.Default.Close) }
         Button(onClick = {imageDone.value= Icons.Default.Done}) {
@@ -74,14 +100,20 @@ fun BulletPoint(bulletpointText: String){
                 contentDescription = "Click if you are done"
             )
         }
-        Text(text = bulletpointText)
-        Button(onClick = {}) {
+        Text(text = bulletPointItem.text)
+        Button(onClick = { }) {
             Image(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete the bullet point")
         }
     }
 }
+
+fun openPopup(){
+
+}
+
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
