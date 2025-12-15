@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -23,10 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
 import com.alexproject.todolist.ui.theme.TodoListTheme
 import kotlinx.serialization.json.Json
 
@@ -35,7 +41,7 @@ data class Item(
     val text: String,
     val done: Boolean
 )
-var itemsList: MutableList<Item> = mutableListOf()
+
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,10 +50,9 @@ class MainActivity : ComponentActivity() {
     [
         { "text": "App Fertigstellen", "done": true },
         { "text": "Auf github hochladen",  "done": false },
-        { "text": "Auf github hochladen",  "done": false }
+        { "text": "Was anderes",  "done": false }
     ]
 """
-        itemsList = Json.decodeFromString(jsonString)
         enableEdgeToEdge()
         setContent {
             TodoListTheme {
@@ -64,7 +69,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }) { innerPadding ->
                     Column() {
-                        ListExample(innerPadding, itemsList)
+                        ListExample(innerPadding, jsonString)
                         Button(onClick={openPopup()}) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -79,19 +84,45 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun ListExample(innerPadding: PaddingValues, itemsList: MutableList<Item>){
+fun ListExample(innerPadding: PaddingValues, jsonString: String) {
 
+    val itemsList = remember {
+        Json.decodeFromString<List<Item>>(jsonString)
+            .toMutableStateList()
+    }
 
-    var count = remember { mutableStateOf(0)}
-    Column(modifier = Modifier.padding(innerPadding)) {
-        itemsList.forEach { bulletpointItem ->
-            BulletPoint(bulletpointItem)
+    LazyColumn(modifier = Modifier.padding(innerPadding)) {
+        items(
+            items = itemsList,
+            key = { it.text } // IMPORTANT: stable key
+        ) { item ->
+            Row {
+                var imageDone = remember { mutableStateOf(Icons.Default.Close) }
+
+                Button(onClick = { imageDone.value = Icons.Default.Done }) {
+                    Icon(
+                        imageVector = imageDone.value,
+                        contentDescription = "Done"
+                    )
+                }
+
+                Text(text = item.text)
+
+                Button(onClick = {
+                    itemsList.remove(item) // ✅ triggers recomposition
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete"
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun BulletPoint(bulletPointItem: Item){
+fun BulletPoint(bulletPointItemList: MutableList<Item>, item:Item){
     Row{
         var imageDone = remember { mutableStateOf(Icons.Default.Close) }
         Button(onClick = {imageDone.value= Icons.Default.Done}) {
@@ -100,8 +131,8 @@ fun BulletPoint(bulletPointItem: Item){
                 contentDescription = "Click if you are done"
             )
         }
-        Text(text = bulletPointItem.text)
-        Button(onClick = { }) {
+        Text(text = item.text)
+        Button(onClick = { bulletPointItemList.remove(item)}) {
             Image(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete the bullet point")
