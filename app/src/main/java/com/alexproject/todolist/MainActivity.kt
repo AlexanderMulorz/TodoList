@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -26,13 +25,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.alexproject.todolist.ui.theme.TodoListTheme
 import kotlinx.serialization.json.Json
 
@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
         { "text": "Was anderes",  "done": false }
     ]
 """
+
         enableEdgeToEdge()
         setContent {
             TodoListTheme {
@@ -68,16 +69,33 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }) { innerPadding ->
-                    Column() {
-                        ListExample(innerPadding, jsonString)
-                        Button(onClick={openPopup()}) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "add element to TODO list")
-                        }
-                    }
+                        NavScreens(innerPadding, jsonString)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun NavScreens(innerPadding: PaddingValues, jsonString: String){
+    val navController = rememberNavController()
+    NavHost(
+        navController = navController,
+        startDestination = "home"
+    ) {
+        composable("home") {
+            Column() {
+                ListExample(innerPadding, jsonString)
+                Button(onClick = { navController.navigate("addscreen") }) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "add element to TODO list"
+                    )
+                }
+            }
+        }
+        composable("addscreen") {
+            AddBulletPointScreen(innerPadding)
         }
     }
 }
@@ -140,7 +158,13 @@ fun BulletPoint(bulletPointItemList: MutableList<Item>, item:Item){
     }
 }
 
-fun openPopup(){
+@Composable
+fun AddBulletPointScreen(innerPadding: PaddingValues) {
+    Text(
+        text = "AddBulletPointScreen",
+        modifier = Modifier.padding(innerPadding)
+    )
+
 
 }
 
@@ -158,6 +182,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     TodoListTheme {
-        Greeting("Android")
+
     }
 }
