@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,37 +23,40 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.alexproject.todolist.ui.theme.TodoListTheme
 import kotlinx.serialization.json.Json
 
-@kotlinx.serialization.Serializable
-data class Item(
-    val text: String,
-    val done: Boolean
-)
+
 
 class MainActivity : ComponentActivity() {
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val jsonString = """
     [
-        { "text": "App Fertigstellen", "done": true },
-        { "text": "Auf github hochladen",  "done": false },
-        { "text": "Was anderes",  "done": false }
+        { "id": "0","text": "App Fertigstellen", "done": true },
+        { "id": "1","text": "Auf github hochladen",  "done": false },
+        { "id": "2","text": "Was anderes",  "done": false }
     ]
 """
+        var bulletPointList = Json.decodeFromString<List<Item>>(jsonString) as MutableList<Item>
 
         enableEdgeToEdge()
         setContent {
@@ -69,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }) { innerPadding ->
-                        NavScreens(innerPadding, jsonString)
+                        NavScreens(innerPadding)
                 }
             }
         }
@@ -77,15 +81,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavScreens(innerPadding: PaddingValues, jsonString: String){
+fun NavScreens(innerPadding: PaddingValues){
     val navController = rememberNavController()
+    val viewModel: MainViewModel = hiltViewModel()
+    viewModel.addItem(Item(0,"Example Bulletpoint", false))
     NavHost(
         navController = navController,
         startDestination = "home"
     ) {
         composable("home") {
             Column() {
-                ListExample(innerPadding, jsonString)
+                ListExample(innerPadding, viewModel)
                 Button(onClick = { navController.navigate("addscreen") }) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -95,24 +101,20 @@ fun NavScreens(innerPadding: PaddingValues, jsonString: String){
             }
         }
         composable("addscreen") {
-            AddBulletPointScreen(innerPadding)
+            AddBulletPointScreen(innerPadding, navController, viewModel)
         }
     }
 }
 
 
 @Composable
-fun ListExample(innerPadding: PaddingValues, jsonString: String) {
-
-    val itemsList = remember {
-        Json.decodeFromString<List<Item>>(jsonString)
-            .toMutableStateList()
-    }
+fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
+    val state = viewModel.uiState.collectAsState()
 
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(
-            items = itemsList,
-            key = { it.text } // IMPORTANT: stable key
+            items = state.value.items,
+            key = { it.id } // IMPORTANT: stable key
         ) { item ->
             Row {
                 var imageDone = remember { mutableStateOf(Icons.Default.Close) }
@@ -127,7 +129,7 @@ fun ListExample(innerPadding: PaddingValues, jsonString: String) {
                 Text(text = item.text)
 
                 Button(onClick = {
-                    itemsList.remove(item) // ✅ triggers recomposition
+                    viewModel.removeItem(item)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -140,32 +142,38 @@ fun ListExample(innerPadding: PaddingValues, jsonString: String) {
 }
 
 @Composable
-fun BulletPoint(bulletPointItemList: MutableList<Item>, item:Item){
-    Row{
-        var imageDone = remember { mutableStateOf(Icons.Default.Close) }
-        Button(onClick = {imageDone.value= Icons.Default.Done}) {
-            Icon(
-                imageVector = imageDone.value,
-                contentDescription = "Click if you are done"
+fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavController, viewModel: MainViewModel) {
+    var text = remember { mutableStateOf("") }
+    Column(modifier = Modifier.padding(innerPadding)) {
+        Text(
+            text = "Add Bulletpoint",
+        )
+        TextField(value=text.value,
+            onValueChange = { text.value = it },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row{
+            Button(onClick = {
+            navController.navigate("home")
+        }){
+            Text(
+                text= "Go Back"
             )
         }
-        Text(text = item.text)
-        Button(onClick = { bulletPointItemList.remove(item)}) {
-            Image(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete the bullet point")
+            Button(onClick = {
+                if(!text.value.equals("")){
+                    navController.navigate("home")
+                    viewModel.addItem(Item(viewModel.uiState.value.items.size,text.value, false))
+                }
+
+            }){
+                Text(
+                    text= "Save Bulletpoint"
+                )
+            }
         }
+
     }
-}
-
-@Composable
-fun AddBulletPointScreen(innerPadding: PaddingValues) {
-    Text(
-        text = "AddBulletPointScreen",
-        modifier = Modifier.padding(innerPadding)
-    )
-
-
 }
 
 
