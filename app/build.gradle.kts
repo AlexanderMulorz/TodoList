@@ -62,5 +62,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation("com.google.code.gson:gson:2.13.2")
 
 }

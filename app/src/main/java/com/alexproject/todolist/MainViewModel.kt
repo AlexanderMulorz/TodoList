@@ -1,5 +1,6 @@
 package com.alexproject.todolist
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,11 @@ class MainViewModel: ViewModel() {
             state.copy(items = state.items - item)
         }
     }
-    fun initFromJson(){
+    fun initFromJson(fileName:String, context: Context){
+        val f = FileHandler()
 
+        _uiState.update { state ->
+            state.copy(items = f.readJsonList(context, "jsonFile.txt"))
+        }
     }
 }

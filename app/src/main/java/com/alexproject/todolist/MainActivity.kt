@@ -1,5 +1,6 @@
 package com.alexproject.todolist
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -41,22 +43,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.alexproject.todolist.ui.theme.TodoListTheme
 import kotlinx.serialization.json.Json
-
+import kotlin.collections.contains
 
 
 class MainActivity : ComponentActivity() {
 
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val jsonString = """
-    [
-        { "id": "0","text": "App Fertigstellen", "done": true },
-        { "id": "1","text": "Auf github hochladen",  "done": false },
-        { "id": "2","text": "Was anderes",  "done": false }
-    ]
-"""
-        var bulletPointList = Json.decodeFromString<List<Item>>(jsonString) as MutableList<Item>
+        createJsonFile("jsonFile.txt", this.baseContext)
+
+        //var bulletPointList = Json.decodeFromString<List<Item>>(jsonString) as MutableList<Item>
 
         enableEdgeToEdge()
         setContent {
@@ -84,7 +82,7 @@ class MainActivity : ComponentActivity() {
 fun NavScreens(innerPadding: PaddingValues){
     val navController = rememberNavController()
     val viewModel: MainViewModel = hiltViewModel()
-    viewModel.addItem(Item(0,"Example Bulletpoint", false))
+    viewModel.initFromJson("jsonFile.txt",LocalContext.current)
     NavHost(
         navController = navController,
         startDestination = "home"
@@ -144,6 +142,7 @@ fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
 @Composable
 fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavController, viewModel: MainViewModel) {
     var text = remember { mutableStateOf("") }
+
     Column(modifier = Modifier.padding(innerPadding)) {
         Text(
             text = "Add Bulletpoint",
@@ -164,6 +163,8 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
                 if(!text.value.equals("")){
                     navController.navigate("home")
                     viewModel.addItem(Item(viewModel.uiState.value.items.size,text.value, false))
+
+
                 }
 
             }){
@@ -175,6 +176,22 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
 
     }
 }
+fun createJsonFile(fileName:String, context: Context){
+    val jsonString = """
+    [
+        { "id": "0","text": "App Fertigstellen", "done": true },
+        { "id": "1","text": "Auf github hochladen",  "done": false },
+        { "id": "2","text": "Was anderes",  "done": false }
+    ]
+"""
+
+    var writeBulletPointList = Json.decodeFromString<List<Item>>(jsonString)
+    val f = FileHandler()
+    if(!context.fileList().contains(fileName)) {
+        f.writeToFile(context, fileName, writeBulletPointList)
+    }
+}
+
 
 
 
