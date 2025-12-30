@@ -108,6 +108,7 @@ fun NavScreens(innerPadding: PaddingValues){
 @Composable
 fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
     val state = viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(
@@ -128,6 +129,7 @@ fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
 
                 Button(onClick = {
                     viewModel.removeItem(item)
+                    viewModel.saveToJson("jsonFile.txt",context)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -141,8 +143,8 @@ fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
 
 @Composable
 fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavController, viewModel: MainViewModel) {
-    var text = remember { mutableStateOf("") }
-
+    val text = remember { mutableStateOf("") }
+    val context = LocalContext.current
     Column(modifier = Modifier.padding(innerPadding)) {
         Text(
             text = "Add Bulletpoint",
@@ -163,8 +165,7 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
                 if(!text.value.equals("")){
                     navController.navigate("home")
                     viewModel.addItem(Item(viewModel.uiState.value.items.size,text.value, false))
-
-
+                    viewModel.saveToJson("jsonFile.txt",context)
                 }
 
             }){
@@ -173,7 +174,6 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
                 )
             }
         }
-
     }
 }
 fun createJsonFile(fileName:String, context: Context){
