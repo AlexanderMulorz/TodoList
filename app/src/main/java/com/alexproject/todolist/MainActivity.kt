@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -114,21 +115,34 @@ fun NavScreens(innerPadding: PaddingValues){
 fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
     val state = viewModel.uiState.collectAsState()
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
-        items(
+        itemsIndexed(
             items = state.value.items
-        ) { item ->
-            BulletPoint(item,viewModel)
+        ) { index:Int, item:Item ->
+            BulletPoint(item,viewModel,index)
         }
     }
 }
 
 @Composable
-fun BulletPoint(item:Item, viewModel: MainViewModel){
+fun BulletPoint(item:Item, viewModel: MainViewModel, index:Int){
     val context = LocalContext.current
     Row(modifier = Modifier.fillMaxWidth()) {
         var imageDone = remember { mutableStateOf(Icons.Default.Close) }
+        if(item.done){
+            imageDone.value = Icons.Default.Done
+        }
 
-        Button(onClick = { imageDone.value = Icons.Default.Done }) {
+        Button(onClick = {
+            if(item.done){
+                imageDone.value = Icons.Default.Close
+                viewModel.uiState.value.items[index].done=false
+            }else{
+                imageDone.value = Icons.Default.Done
+                viewModel.uiState.value.items[index].done=true
+            }
+            viewModel.saveToJson("jsonFile.txt",context)
+
+        }) {
             Icon(
                 imageVector = imageDone.value,
                 contentDescription = "Done"
