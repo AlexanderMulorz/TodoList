@@ -5,15 +5,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -33,22 +30,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.alexproject.todolist.ui.theme.TodoListTheme
 import kotlinx.serialization.json.Json
-import java.nio.file.WatchEvent
 import kotlin.collections.contains
 
 
@@ -73,7 +64,7 @@ class MainActivity : ComponentActivity() {
                                 titleContentColor = MaterialTheme.colorScheme.primary,
                             ),
                             title = {
-                                Text("Todo Liste")
+                                Text("Todo List")
                             }
                         )
                     }) { innerPadding ->
@@ -94,7 +85,7 @@ fun NavScreens(innerPadding: PaddingValues){
         startDestination = "home"
     ) {
         composable("home") {
-            Column() {
+            Column {
                 ListExample(innerPadding, viewModel)
                 Button(onClick = { navController.navigate("addscreen") }) {
                     Icon(
@@ -127,7 +118,7 @@ fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
 fun BulletPoint(item:Item, viewModel: MainViewModel, index:Int){
     val context = LocalContext.current
     Row(modifier = Modifier.fillMaxWidth()) {
-        var imageDone = remember { mutableStateOf(Icons.Default.Close) }
+        val imageDone = remember { mutableStateOf(Icons.Default.Close) }
         if(item.done){
             imageDone.value = Icons.Default.Done
         }
@@ -169,7 +160,7 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
     val context = LocalContext.current
     Column(modifier = Modifier.padding(innerPadding)) {
         Text(
-            text = "Add Bulletpoint",
+            text = "Add Bullet point",
         )
         TextField(value=text.value,
             onValueChange = { text.value = it },
@@ -192,7 +183,7 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
 
             }){
                 Text(
-                    text= "Save Bulletpoint"
+                    text= "Save Bullet point"
                 )
             }
         }
@@ -202,13 +193,11 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
 fun createJsonFile(fileName:String, context: Context){
     val jsonString = """
     [
-        { "text": "App Fertigstellen", "done": true },
-        { "text": "Auf github hochladen",  "done": false },
-        { "text": "Was anderes",  "done": false }
+        { "text": "Example Entry", "done": true }
     ]
 """
 
-    var writeBulletPointList = Json.decodeFromString<List<Item>>(jsonString)
+    val writeBulletPointList = Json.decodeFromString<List<Item>>(jsonString)
     val f = FileHandler()
     if(!context.fileList().contains(fileName)) {
         f.writeToFile(context, fileName, writeBulletPointList)
