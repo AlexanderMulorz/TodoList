@@ -14,7 +14,9 @@ class MainViewModel: ViewModel() {
     private val _uiState = MutableStateFlow(SharedUiState())
     val uiState: StateFlow<SharedUiState> = _uiState
 
-    fun addItem(item: Item) {
+    fun addItem(text: String) {
+        val newId = _uiState.value.items.last().id + 1
+        val item = Item(newId ,text, false)
         _uiState.update { state ->
             state.copy(items = state.items + item)
         }
@@ -34,5 +36,10 @@ class MainViewModel: ViewModel() {
     fun saveToJson(fileName:String, context: Context){
         val f = FileHandler()
         f.writeToFile(context,fileName,_uiState.value.items)
+    }
+    fun toggleItemDone(index: Int) {
+        val newItems = uiState.value.items.toMutableList()
+        newItems[index] = newItems[index].copy(done = !newItems[index].done)
+        _uiState.value = uiState.value.copy(items = newItems)
     }
 }

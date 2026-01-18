@@ -107,7 +107,8 @@ fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
     val state = viewModel.uiState.collectAsState()
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         itemsIndexed(
-            items = state.value.items
+            items = state.value.items,
+            key = { _, item -> item.id }
         ) { index:Int, item:Item ->
             BulletPoint(item,viewModel,index)
         }
@@ -118,24 +119,15 @@ fun ListExample(innerPadding: PaddingValues, viewModel: MainViewModel) {
 fun BulletPoint(item:Item, viewModel: MainViewModel, index:Int){
     val context = LocalContext.current
     Row(modifier = Modifier.fillMaxWidth()) {
-        val imageDone = remember { mutableStateOf(Icons.Default.Close) }
-        if(item.done){
-            imageDone.value = Icons.Default.Done
-        }
+        val imageDone = if (item.done) Icons.Default.Done else Icons.Default.Close
 
         Button(onClick = {
-            if(item.done){
-                imageDone.value = Icons.Default.Close
-                viewModel.uiState.value.items[index].done=false
-            }else{
-                imageDone.value = Icons.Default.Done
-                viewModel.uiState.value.items[index].done=true
-            }
+            viewModel.toggleItemDone(index)
             viewModel.saveToJson("jsonFile.txt",context)
 
         }) {
             Icon(
-                imageVector = imageDone.value,
+                imageVector = imageDone,
                 contentDescription = "Done"
             )
         }
@@ -176,8 +168,9 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
         }
             Button(onClick = {
                 if(!text.value.equals("")){
+
                     navController.navigate("home")
-                    viewModel.addItem(Item(text.value, false))
+                    viewModel.addItem(text.value)
                     viewModel.saveToJson("jsonFile.txt",context)
                 }
 
@@ -193,7 +186,7 @@ fun AddBulletPointScreen(innerPadding: PaddingValues, navController: NavControll
 fun createJsonFile(fileName:String, context: Context){
     val jsonString = """
     [
-        { "text": "Example Entry", "done": true }
+        { "id":  "0","text": "Example Entry", "done": true }
     ]
 """
 
